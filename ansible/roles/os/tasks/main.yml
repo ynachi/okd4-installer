@@ -1,0 +1,157 @@
+---
+# tasks file for os
+
+- name: Enable EPEL release
+  yum:
+    name:
+      - epel-release.noarch
+    state: present
+  become: true
+
+- name: Upgrade all packages
+  yum:
+    name: '*'
+    state: latest
+  become: true
+
+- name: Installing KVM Packages
+  package:
+    name: "{{ kvm_packages }}"
+    state: present
+  register: _kvm_packages
+  until: _kvm_packages is success
+  retries: 3
+  delay: 15
+  when:
+    - "kvm_packages | length >0"
+  become: true
+
+- name: Add the current user to group libvirt
+  user:
+    name: "{{ ansible_user }}"
+    groups: libvirt
+    append: yes
+  become: true
+
+- name: Enable cockpit
+  yum:
+    name:
+      - cockpit
+    state: present
+  become: true
+
+- name: Enable & Start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+  become: true
+
+- name: Create Cockpit config directory
+  file:
+    path: /etc/systemd/system/cockpit.socket.d/
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+  become: true
+
+- name: Drop Cockpit config file
+  copy:
+    src: listen.conf
+    dest: /etc/systemd/system/cockpit.socket.d/listen.conf
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  become: true
+
+- name: Enable & Start Cockpit
+  service:
+    name: cockpit.socket
+    state: started
+    enabled: true
+  become: true
+
+- name: Allow NFS traffic from VM's to Host
+  firewalld:
+    zone: libvirt
+    state: enabled
+    permanent: yes
+    service: "{{ item }}"
+  loop:
+    - nfs
+    - mountd
+    - rpc-bind
+  notify: 'Reload Firewalld'
+  become: true
+
+- name: Allow OpenShift traffic from VM's to Host
+  firewalld:
+    zone: libvirt
+    state: enabled
+    permanent: yes
+    port: "{{ item }}"
+  loop:
+    - 80/tcp
+    - 443/tcp
+    - 6443/tcp
+    - 22623/tcp
+  notify: 'Reload Firewalld'
+  become: true
+
+- name: Allow OpenShift traffic from public to Host
+  firewalld:
+    zone: public
+    state: enabled
+    permanent: yes
+    port: "{{ item }}"
+  loop:
+    - 80/tcp
+    - 443/tcp
+    - 6443/tcp
+  notify: 'Reload Firewalld'
+  become: true
+
+- name: Allow Cockpit traffic
+  firewalld:
+    zone: public
+    state: enabled
+    permanent: yes
+    port: 9090/tcp
+  notify: 'Reload Firewalld'
+  become: true
+
+- name: Get nested virtualization status
+  command: cat /sys/module/kvm_intel/parameters/nested
+  register: kvm_intel_nested
+  check_mode: no
+  changed_when: false
+  become: true
+
+- name: Add options kvm_intel nested=1
+  lineinfile:
+    state: present
+    dest: /etc/modprobe.d/kvm.conf
+    regexp: "options kvm_intel nested="
+    line: "options kvm_intel nested=1"
+    create: true
+  when: kvm_intel_nested.stdout.find('N') == 0
+  become: true
+
+- name: nested not activated yet, reloading kvm_intel module
+  shell: rmmod kvm_intel; modprobe kvm_intel
+  when: kvm_intel_nested.stdout.find('N') == 0
+  become: true
+
+- name: Enable and Start libvirtd
+  systemd:
+    name: libvirtd
+    state: started
+    enabled: yes
+  become: true
+
+- name: 'Restart libvirtd because of Issue #146'
+  systemd:
+    name: libvirtd
+    state: restarted
+  become: true

@@ -1,0 +1,8 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: infra
+  tasks:
+    - name: Prepare infra host
+      import_role:
+        name: os
+
