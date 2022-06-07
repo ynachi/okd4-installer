@@ -1,0 +1,146 @@
+---
+# Debug...
+# - template:
+#     src: templates/network.xml.j2
+#     dest: network.xml
+
+- name: Build IPv4 subnet
+  set_fact:
+    vn_subnet_ipv4: "{{ vn_subnet.split('.')[:3] | join('.') }}"
+    ipv4_listen_private:
+      - "{{ vn_subnet.split('.')[:3] | join('.') }}.1"
+    ipv4_listen_public:
+      - "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+  when: "'IPv4' in ip_families"
+  tags: always
+
+- name: Build list of nodes
+  set_fact:
+    __data_structure__: |
+      bootstrap:
+      - name: bootstrap
+        fqdn: "bootstrap.{{ vn_internal_domain }}"
+        mac:              "52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % 2 }}"
+        duid: "00:03:00:01:52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % 2 }}"
+        {% if 'IPv4' in ip_families -%}
+        ipv4: "{{ vn_subnet_ipv4 }}.2"
+        {% endif -%}
+        {% if 'IPv6' in ip_families -%}
+        ipv6: "{{ vn_subnet_ipv6 }}::2"
+        {% endif %}
+
+      masters:
+      {% for id in range(0,(master_count | int )) %}
+
+      - name: master-{{ id }}
+        fqdn: "master-{{ id }}.{{ vn_internal_domain }}"
+        mac:              "52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + id) }}"
+        duid: "00:03:00:01:52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + id) }}"
+        {% if 'IPv4' in ip_families -%}
+        ipv4: "{{ vn_subnet_ipv4 }}.{{ 10 + id }}"
+        {% endif -%}
+        {% if 'IPv6' in ip_families -%}
+        ipv6: "{{ vn_subnet_ipv6 }}::{{ "%x" % (4096 + id) }}"
+        {% endif -%}
+      {% endfor %}
+
+      workers: {% if compute_count|int < 1 %}[]{% endif %}
+      {% for id in range(0,(compute_count | int )) %}
+
+      - name: compute-{{ id }}
+        fqdn: "compute-{{ id }}.{{ vn_internal_domain }}"
+        mac:              "52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + master_count|int + id) }}"
+        duid: "00:03:00:01:52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + master_count|int + id) }}"
+        {% if 'IPv4' in ip_families -%}
+        ipv4: "{{ vn_subnet_ipv4 }}.{{ 10 + master_count|int + id }}"
+        {% endif -%}
+        {% if 'IPv6' in ip_families -%}
+        ipv6: "{{ vn_subnet_ipv6 }}::{{ "%x" % ( 4096 + master_count|int + id ) }}"
+        {% endif -%}
+      {% endfor %}
+
+
+- name: Print nodes string
+  debug:
+    msg: "{{ __data_structure__.split('\n')  }}"
+    verbosity: 3
+
+- name: Build dict from node yaml
+  set_fact:
+    nodes: "{{ __data_structure__ | from_yaml }}"
+
+- name: Print nodes yaml
+  debug:
+    var: "nodes"
+    verbosity: 1
+
+#
+# Libvirt Network
+#
+
+- name: Define network {{ cluster_name }}
+  virt_net:
+    command: define
+    name: "{{ cluster_name }}"
+    xml: "{{ lookup('template', 'templates/network.xml.j2') }}"
+
+- name: Active network {{ cluster_name }}
+  virt_net:
+    state: active
+    name: "{{ cluster_name }}"
+
+- name: Activate autostart network {{ cluster_name }}
+  virt_net:
+    autostart: yes
+    name: "{{ cluster_name }}"
+
+#
+#  Load Balancer
+#
+- name: Build haproxy config
+  set_fact:
+    lb_haproxy_cfg: "{{ lookup('template','templates/haproxy.conf.j2') }}"
+
+- name: Debug haproxy config
+  debug:
+    msg: "{{ lb_haproxy_cfg.split('\n') }}"
+    verbosity: 1
+
+# - name: Create OpenShift 4 load balancer
+#   import_role:
+#     name: openshift-4-loadbalancer
+#     tasks_from: create.yml
+#   vars:
+#     lb_name: "openshift-4-loadbalancer-{{ cluster_name }}"
+#     lb_haproxy_cfg: "{{ lb_haproxy_cfg }}"
+#   tags: lb
+
+#
+# Public DNS
+#
+# - name: Create public dns entries
+#   import_role:
+#     name: public_dns
+#     tasks_from: create.yml
+#   vars:
+#     pd_provider: "{{ dns_provider }}"
+#     pd_public_ip: "{% if 'IPv4' in ip_families %}{{ public_ip | default(listen_address) }}{% endif %}"
+#     pd_public_ipv6: "{% if 'IPv6' in ip_families %}{{ public_ipv6 | default(listen_address_ipv6) }}{% endif %}"
+#     pd_cloudflare_account_api_token: "{{ cloudflare_account_api_token }}"
+#     pd_cloudflare_zone: "{{ cloudflare_zone }}"
+#     pd_aws_access_key: "{{ aws_access_key }}"
+#     pd_aws_secret_key: "{{ aws_secret_key }}"
+#     pd_aws_zone: "{{ aws_zone }}"
+#     pd_hetzner_account_api_token: "{{ hetzner_account_api_token }}"
+#     pd_hetzner_zone: "{{ hetzner_zone }}"
+#     pd_public_domain: "{{ cluster_name }}.{{ public_domain }}"
+#   tags: public_dns
+#   when: dns_provider != 'none'
+
+- name: Add api.{{ cluster_name }}.{{ public_domain }} to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}.{{ public_domain }}"
+    block: |
+      {{ listen_address }} api.{{ cluster_name }}.{{ public_domain }}
+  tags: public_dns

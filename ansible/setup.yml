@@ -5,4 +5,9 @@
     - name: Prepare infra host
       import_role:
         name: os
+      tags: os 
+    - name: Configure KVM
+      import_role:
+        name: kvm
+
 

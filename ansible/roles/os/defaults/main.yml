@@ -14,3 +14,10 @@ kvm_packages:
   - python3-openshift
   # It looks like firewalld is not installed in CentOS Stream
   - firewalld
+
+cockpit_packages:
+  - cockpit 
+  - cockpit-machines
+  - cockpit-podman
+  # podman is not a cockpit package but I am too lazy to create a new variable
+  - podman

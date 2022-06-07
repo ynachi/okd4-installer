@@ -26,18 +26,23 @@
     - "kvm_packages | length >0"
   become: true
 
+- name: Installing Cockpit Packages
+  package:
+    name: "{{ cockpit_packages }}"
+    state: present
+  register: _cockpit_packages
+  until: _cockpit_packages is success
+  retries: 3
+  delay: 15
+  when:
+    - "cockpit_packages | length >0"
+  become: true
+
 - name: Add the current user to group libvirt
   user:
     name: "{{ ansible_user }}"
     groups: libvirt
     append: yes
-  become: true
-
-- name: Enable cockpit
-  yum:
-    name:
-      - cockpit
-    state: present
   become: true
 
 - name: Enable & Start firewalld
@@ -68,6 +73,13 @@
 - name: Enable & Start Cockpit
   service:
     name: cockpit.socket
+    state: started
+    enabled: true
+  become: true
+
+- name: Enable & Start Podman
+  service:
+    name: podman
     state: started
     enabled: true
   become: true

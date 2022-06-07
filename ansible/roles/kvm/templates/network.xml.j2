@@ -1,0 +1,57 @@
+<network {%- if 'IPv6' in ip_families  %} ipv6='yes' {% endif -%}>
+    <name>{{ cluster_name }}</name>
+    <domain name="{{ vn_internal_domain }}"/>
+    <forward mode='{{ network_forward_mode | default('nat') }}'/>
+    <dns>
+        {% if 'IPv4' in ip_families  %}
+        <host ip='{{ vn_subnet.split('.')[:3] | join('.')}}.1'>
+            <hostname>host.{{ vn_internal_domain }}</hostname>
+            <hostname>api-int.{{ vn_public_domain }}</hostname>
+            <hostname>api.{{ vn_public_domain }}</hostname>
+            <hostname>oauth-openshift.apps.{{ vn_public_domain }}</hostname>
+            <hostname>console-openshift-console.apps.{{ vn_public_domain }}</hostname>
+        </host>
+        {% endif %}
+        {% if 'IPv6' in ip_families  %}
+        <host ip='{{ vn_subnet_ipv6 }}::1'>
+            <hostname>host.{{ vn_internal_domain }}</hostname>
+            <hostname>api-int.{{ vn_public_domain }}</hostname>
+            <hostname>api.{{ vn_public_domain }}</hostname>
+            <hostname>oauth-openshift.apps.{{ vn_public_domain }}</hostname>
+            <hostname>console-openshift-console.apps.{{ vn_public_domain }}</hostname>
+        </host>
+        {% endif %}
+    </dns>
+    {% if 'IPv4' in ip_families  %}
+    <ip address='{{ vn_subnet.split('.')[:3] | join('.')}}.1' netmask='255.255.255.0'>
+        <dhcp>
+            <range start='{{ vn_subnet.split('.')[:3] | join('.')}}.10' end='{{ vn_subnet.split('.')[:3] | join('.')}}.250'/>
+            {% for node in nodes.bootstrap %}
+                <host mac='{{ node.mac }}' name='{{ node.fqdn }}' ip='{{ node.ipv4 }}'/>
+            {% endfor %}
+            {% for node in nodes.masters %}
+                <host mac='{{ node.mac }}' name='{{ node.fqdn }}' ip='{{ node.ipv4 }}'/>
+            {% endfor %}
+            {% for node in nodes.workers %}
+                <host mac='{{ node.mac }}' name='{{ node.fqdn }}' ip='{{ node.ipv4 }}'/>
+            {% endfor %}
+        </dhcp>
+    </ip>
+    {% endif %}
+    {% if 'IPv6' in ip_families  %}
+    <ip family='ipv6' address='{{ vn_subnet_ipv6 }}::1' prefix='80'>
+        <dhcp>
+            <range start='{{ vn_subnet_ipv6 }}::1000' end='{{ vn_subnet_ipv6 }}::2000' />
+            {% for node in nodes.bootstrap %}
+                <host id='{{ node.duid }}' name='{{ node.fqdn }}' ip='{{ node.ipv6 }}'/>
+            {% endfor %}
+            {% for node in nodes.masters %}
+                <host id='{{ node.duid }}' name='{{ node.fqdn }}' ip='{{ node.ipv6 }}'/>
+            {% endfor %}
+            {% for node in nodes.workers %}
+                <host id='{{ node.duid }}' name='{{ node.fqdn }}' ip='{{ node.ipv6 }}'/>
+            {% endfor %}
+        </dhcp>
+    </ip>
+    {% endif %}
+</network>
