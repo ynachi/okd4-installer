@@ -1,0 +1,20 @@
+name: Deploy OKD to baremetal server
+on:
+  push:
+    branches: [ main ]
+jobs:
+  deploy-okd4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve the deploy ssh private key and decode it to a file
+        env:
+          SSH_DEPLOY_KEY_BASE64: ${{ secrets.SSH_DEPLOY_KEY_BASE64 }}
+        run: |
+          mkdir ~/.ssh
+          echo $SSH_DEPLOY_KEY_BASE64 | base64 -di > ~/.ssh/id_ed25519
+          chmod 700 ~/.ssh
+          chmod 400 ~/.ssh/id_ed25519
+      - name: Set up Ansible tool
+        run: |
+          python3 -m pip install "ansible<2.12"

@@ -1,0 +1,84 @@
+---
+# tasks file for okd-facts
+
+- name: Build IPv4 subnet
+  set_fact:
+    vn_subnet_ipv4: "{{ vn_subnet.split('.')[:3] | join('.') }}"
+    ipv4_listen_private:
+      - "{{ vn_subnet.split('.')[:3] | join('.') }}.1"
+    ipv4_listen_public:
+      - "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+  when: "'IPv4' in ip_families"
+  tags: always
+
+- name: Set public IPv4 address alias
+  set_fact:
+    listen_address: 
+      - "{{ ipv4_listen_public }}"
+  when: "'IPv4' in ip_families"
+  tags: always
+
+- name: Build list of nodes
+  set_fact:
+    __data_structure__: |
+      bootstrap:
+      - name: bootstrap
+        fqdn: "bootstrap.{{ vn_internal_domain }}"
+        mac:              "52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % 2 }}"
+        duid: "00:03:00:01:52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % 2 }}"
+        {% if 'IPv4' in ip_families -%}
+        ipv4: "{{ vn_subnet_ipv4 }}.2"
+        {% endif -%}
+        {% if 'IPv6' in ip_families -%}
+        ipv6: "{{ vn_subnet_ipv6 }}::2"
+        {% endif %}
+
+      masters:
+      {% for id in range(0,(master_count | int )) %}
+
+      - name: master-{{ id }}
+        fqdn: "master-{{ id }}.{{ vn_internal_domain }}"
+        mac:              "52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + id) }}"
+        duid: "00:03:00:01:52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + id) }}"
+        {% if 'IPv4' in ip_families -%}
+        ipv4: "{{ vn_subnet_ipv4 }}.{{ 10 + id }}"
+        {% endif -%}
+        {% if 'IPv6' in ip_families -%}
+        ipv6: "{{ vn_subnet_ipv6 }}::{{ "%x" % (4096 + id) }}"
+        {% endif -%}
+      {% endfor %}
+
+      workers: {% if compute_count|int < 1 %}[]{% endif %}
+      {% for id in range(0,(compute_count | int )) %}
+
+      - name: compute-{{ id }}
+        fqdn: "compute-{{ id }}.{{ vn_internal_domain }}"
+        mac:              "52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + master_count|int + id) }}"
+        duid: "00:03:00:01:52:54:00:{{ '%02x' % vn_subnet.split('.')[1]|int }}:{{ '%02x' % vn_subnet.split('.')[2]|int }}:{{ '%02x' % (10 + master_count|int + id) }}"
+        {% if 'IPv4' in ip_families -%}
+        ipv4: "{{ vn_subnet_ipv4 }}.{{ 10 + master_count|int + id }}"
+        {% endif -%}
+        {% if 'IPv6' in ip_families -%}
+        ipv6: "{{ vn_subnet_ipv6 }}::{{ "%x" % ( 4096 + master_count|int + id ) }}"
+        {% endif -%}
+      {% endfor %}
+
+
+- name: Print nodes string
+  debug:
+    msg: "{{ __data_structure__.split('\n')  }}"
+    verbosity: 3
+
+- name: Build dict from node yaml
+  set_fact:
+    nodes: "{{ __data_structure__ | from_yaml }}"
+
+- name: Print nodes yaml
+  debug:
+    var: "nodes"
+    verbosity: 1
+
+- name: Disable letsencrypt if dns_provider is none
+  set_fact:
+    letsencrypt_disabled: true
+  when: dns_provider == 'none'

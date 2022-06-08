@@ -1,2 +1,3 @@
 ---
 cluster_name: ocp4
+dns_provider: cloudflare

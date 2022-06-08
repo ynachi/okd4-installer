@@ -2,6 +2,13 @@
 ---
 - hosts: infra
   tasks:
+    - name: Set OpenShift cluster facts
+      import_role:
+        name: okd-facts
+# @TODO
+# Check in which role we need to gather facts
+# and disable fact gathering for more performance
+#      gather_facts: false
     - name: Prepare infra host
       import_role:
         name: os
@@ -9,5 +16,7 @@
     - name: Configure KVM
       import_role:
         name: kvm
+
+
 
 
