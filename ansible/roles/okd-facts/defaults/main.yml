@@ -27,3 +27,12 @@ compute_memory_unit: 'MiB'
 # qemu-img image size specified.
 #   You may use k, M, G, T, P or E suffixe
 compute_root_disk_size: '120G'
+
+#
+# OKD4 Artifacts
+#
+okd_location: 'https://github.com/openshift/okd/releases/download'
+okd_version: '4.10.0-0.okd-2022-05-28-062148'
+fcos_location : 'https://builds.coreos.fedoraproject.org/prod/streams/stable/builds'
+fcos_version: '35.20220327.3.0'
+openshift_mirror: "https://mirror.openshift.com"

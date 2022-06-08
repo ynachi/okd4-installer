@@ -18,27 +18,6 @@ openshift_install_command: "/opt/openshift-install-{{ openshift_version }}/opens
 # dev-pre:
 # {{ openshift_mirror }}/pub/openshift-v4/clients/ocp-dev-preview
 
-# reference to OpenShift clients version
-openshift_client_version: "{{ openshift_version }}"
-
-openshift_mirror: "https://mirror.openshift.com"
-
-openshift_location: "{{ openshift_mirror }}/pub/openshift-v4/clients/ocp/{{openshift_client_version}}"
-
-opm_version: "{{ openshift_client_version }}"
-opm_download_url: "{{ openshift_location }}/opm-linux-{{ opm_version }}.tar.gz"
-opm_dest: "/opt/openshift-client-{{ openshift_client_version }}/"
-
-# reference to coreos qcow file
-coreos_version: 4.9.0
-coreos_download_url: "{{ openshift_mirror }}/pub/openshift-v4/dependencies/rhcos/{{ coreos_version.split('.')[:2]|join('.') }}/{{ coreos_version }}/rhcos-{{coreos_version}}-x86_64-qemu.x86_64.qcow2.gz"  # noqa line-length
-coreos_csum_url: "{{ openshift_mirror }}/pub/openshift-v4/dependencies/rhcos/{{ coreos_version.split('.')[:2]|join('.') }}/{{ coreos_version }}/sha256sum.txt"  # noqa line-length
-
-# you can check available version numbers from here:
-# {{ openshift_mirror }}/pub/openshift-v4/dependencies/rhcos/
-coreos_path: /var/lib/libvirt/images
-coreos_file: "{{ coreos_download_url | basename | regex_search('.*qcow2') }}"
-coreos_image_location: "{{ coreos_path }}/{{ coreos_file }}"
 
 certificates_dir: "{{ playbook_dir }}/../certificate"
 certficate_fullchain: "{{ certificates_dir }}/{{ cluster_name }}.{{ public_domain }}/fullchain.crt"

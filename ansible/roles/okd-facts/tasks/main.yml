@@ -82,3 +82,26 @@
   set_fact:
     letsencrypt_disabled: true
   when: dns_provider == 'none'
+
+- name: Build openshift download urls
+  set_fact:
+    okd_install_download_url: "{{ okd_location }}/{{ okd_version }}/openshift-install-linux-{{ okd_version }}.tar.gz"
+    okd_client_download_url: "{{ okd_location }}/{{ okd_version }}/openshift-client-linux-{{ okd_version }}.tar.gz"
+
+- name: Build Fedora Coreos download url
+  set_fact:
+    fcos_download_url: "{{ fcos_location }}/{{ fcos_version }}/x86_64/fedora-coreos-{{ fcos_version }}-qemu.x86_64.qcow2.xz"
+
+- name: Build Butane and Helm urls
+  set_fact:
+    helm_cli_location: "{{ openshift_mirror }}/pub/openshift-v4/clients/helm/latest/helm-linux-amd64"
+    butane_cli_location: "{{ openshift_mirror }}/pub/openshift-v4/clients/butane/latest/butane-amd64"
+
+- name: Init check_urls
+  set_fact:
+    check_urls:
+      - "{{ fcos_download_url }}"
+      - "{{ okd_install_download_url }}"
+      - "{{ okd_client_download_url }}"
+      - "{{ helm_cli_location }}"
+      - "{{ butane_cli_location }}"
