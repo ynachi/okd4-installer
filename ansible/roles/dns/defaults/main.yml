@@ -1,0 +1,5 @@
+---
+pd_public_ip: "{{ listen_address }}"
+pd_provider: "{{ dns_provider }}"
+pd_cloudflare_zone: "{{ dns_zone }}"
+pd_public_domain: "{{ cluster_name }}.{{ dns_zone }}"
