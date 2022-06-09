@@ -12,9 +12,6 @@ vm_autostart: false
 
 # Important: OpenShift version must match to RHEL CoreOS version!
 
-# reference to OpenShift version
-openshift_version: 4.9.5
-openshift_install_command: "/opt/openshift-install-{{ openshift_version }}/openshift-install"
 # dev-pre:
 # {{ openshift_mirror }}/pub/openshift-v4/clients/ocp-dev-preview
 

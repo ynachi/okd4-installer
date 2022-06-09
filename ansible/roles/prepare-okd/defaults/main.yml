@@ -6,3 +6,5 @@ fcos_image_location: "{{ fcos_path }}/{{ fcos_file }}"
 # checksum of the file we intend to download
 fcos_checksum_filename: "{{ fcos_path }}/fcos.sha256.txt"
 fcos_checksum_sha256: "1c235c83d4036f31a676a77dd8a0aff71a7c4f0d5558de2330e2deff92905a82  fedora-coreos-35.20220327.3.0-qemu.x86_64.qcow2.xz"
+ssh_public_key_location: ~/.ssh/id_ed25519
+openshift_install_dir: "{{ ansible_env.HOME  }}/install_dir/{{ cluster_name }}"

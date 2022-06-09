@@ -4,7 +4,7 @@
 - name: Store the checksum of the file
   copy:
     dest: "{{ fcos_checksum_filename }}"
-    content: "fcos_checksum_sha256\n"
+    content: "{{ fcos_checksum_sha256\n }}"
     mode: 0644
   become: true
 
@@ -28,7 +28,7 @@
 
 - name: Verify existing coreos image is valid
   lineinfile:
-    name: "{{ fcos_checksum_filename }}"
+    name: "{{ fcos_path }}/{{ fcos_file }}.sha256.txt"
     line: "{{ fcos_old_image.stat.checksum }}  {{ fcos_file }}"
     state: present
   check_mode: true
@@ -75,7 +75,91 @@
         creates: "{{ fcos_path }}/{{ fcos_file }}"
       register: unxz
       when: fcos_stat.stat.mimetype == 'application/x-xz'
+
+    - name: Calculate checksum of the new coreos image
+      stat:
+        checksum_algorithm: sha256
+        path: "{{ fcos_path }}/{{ fcos_file }}"
+      register: fcos_csum
+
+    - name: store the checksum of the file
+      copy:
+        dest: "{{ fcos_path }}/{{ fcos_file }}.sha256.txt"
+        content: "{{ fcos_csum.stat.checksum }}  {{ fcos_file }}\n"
+        mode: 0644
+
   when: >
     (not fcos_old_image.stat.exists) or
     csum_check.changed or
     csum_check.failed
+
+- name: Create OKD artifacts directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: u+rwx,g+rx,o+rx
+  loop:
+    - "/opt/openshift-install-{{ okd_version }}"
+    - "/opt/openshift-client-{{ okd_version }}"
+  become: true
+
+- name: Download Openshift installer
+  unarchive:
+    src: "{{ okd_install_download_url }}"
+    dest: "/opt/openshift-install-{{ okd_version }}/"
+    remote_src: yes
+    mode: u+rwx,g+rx,o+rx
+    owner: root
+    group: root
+    exclude:
+      - 'README.md'
+    creates: "/opt/openshift-install-{{ okd_version }}/openshift-install"
+  become: true
+
+- name: Download OKD client
+  unarchive:
+    src: "{{ okd_client_download_url }}"
+    dest: "/opt/openshift-client-{{ okd_version }}/"
+    remote_src: yes
+    mode: u+rwx,g+rx,o+rx
+    owner: root
+    group: root
+    exclude:
+      - 'README.md'
+    creates: "/opt/openshift-client-{{ okd_version }}/oc"
+  become: true
+
+- name: Download Helm client
+  get_url:
+    url: "{{ helm_cli_location }}"
+    mode: u+rwx,g+rx,o+rx
+    dest: "/opt/openshift-client-{{ okd_version }}/helm"
+  become: true
+
+- name: Download butane client
+  get_url:
+    url: "{{ butane_cli_location }}"
+    mode: u+rwx,g+rx,o+rx
+    dest: "/opt/openshift-client-{{ okd_version }}/butane"
+  become: true
+
+- name: Create a symbolic link
+  file:
+    src: "{{ item.value }}"
+    dest: "{{ item.key }}"
+    state: link
+    force: yes
+  with_dict:
+    "/usr/local/bin/oc": "/opt/openshift-client-{{ okd_version }}/oc"
+    "/usr/local/bin/kubectl": "/opt/openshift-client-{{ okd_version }}/kubectl"
+    "/usr/local/bin/openshift-install": "/opt/openshift-install-{{ okd_version }}/openshift-install"
+    "/usr/local/bin/helm": "/opt/openshift-client-{{ okd_version }}/helm"
+    "/usr/local/bin/butane": "/opt/openshift-client-{{ okd_version }}/butane"
+  become: true
+
+- name: Create ignition files
+  include: create-ignition.yml
+  vars:
+    ssh_public_key: "{{ lookup('file', '{{ ssh_public_key_location }}.pub') }}"
+  tags: ignition
+

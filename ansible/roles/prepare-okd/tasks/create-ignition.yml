@@ -1,0 +1,74 @@
+---
+- name: Ensure installation directory
+  file:
+    path: "{{ openshift_install_dir }}"
+    state: directory
+    mode: 0755
+
+- name: Create install config
+  template:
+    src: install-config.yaml.j2
+    dest: "{{ openshift_install_dir }}/install-config.yaml"
+    mode: 0644
+
+- name: Save install-config from deletion
+  copy:
+    dest: "{{ openshift_install_dir }}/install-config.yaml.original"
+    src: "{{ openshift_install_dir }}/install-config.yaml"
+    remote_src: yes
+    mode: 0644
+
+- name: Create manifest files
+  command: "{{ openshift_install_command }} create manifests --dir={{ openshift_install_dir }}"
+  when: not masters_schedulable
+
+- name: Make Master nodes unschedulable
+  lineinfile:
+    path: "{{ openshift_install_dir }}/manifests/cluster-scheduler-02-config.yml"
+    regexp: '^(.*)mastersSchedulable(.*)$'
+    line: '  masterSchedulable: False'
+    backrefs: yes
+  when: not masters_schedulable
+
+- name: Create ignition files
+  command: "openshift-install --dir={{ openshift_install_dir }} create ignition-configs"
+
+# #
+# [connection]
+# ipv6.dhcp-iaid=mac
+# ipv6.dhcp-duid=ll
+- name: Create FCOS Config
+  copy:
+    dest: "{{ openshift_install_dir }}/{{ item }}.rcc"
+    mode: 0644
+    content: |
+      variant: fcos
+      version: 1.4.0
+      ignition:
+        config:
+          merge:
+            - local: {{ item }}.ign
+      storage:
+        files:
+          - path: /etc/NetworkManager/conf.d/01-ipv6.conf
+            contents:
+              source: data:,%5Bconnection%5D%0Aipv6.dhcp-iaid%3Dmac%0Aipv6.dhcp-duid%3Dll
+            mode: 420
+            user:
+              name: root
+            overwrite: true
+  with_items:
+    - bootstrap
+    - master
+    - worker
+
+- name: Mangle ignition config
+  command: |
+    butane \
+      --files-dir {{ openshift_install_dir }} \
+      --output {{ openshift_install_dir }}/{{ item }}-extra.ign \
+      {{ openshift_install_dir }}/{{ item }}.rcc
+  with_items:
+    - bootstrap
+    - master
+    - worker
