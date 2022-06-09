@@ -1,2 +1,81 @@
 ---
 # tasks file for prepare-okd
+
+- name: Store the checksum of the file
+  copy:
+    dest: "{{ fcos_checksum_filename }}"
+    content: "fcos_checksum_sha256\n"
+    mode: 0644
+  become: true
+
+- name: Check download urls
+  uri:
+    method: HEAD
+    url: "{{ item }}"
+    status_code:
+      - 200
+      # Forbidden because of github forwards to aws s3.
+      # HEAD request to S3 is forbidden
+      - 403
+  with_items: "{{ check_urls }}"
+
+- name: Check if fcos image already downloaded and get checksum
+  stat:
+    checksum_algorithm: sha256
+    path: "{{ fcos_path }}/{{ fcos_file }}"
+  register: fcos_old_image
+  become: true
+
+- name: Verify existing coreos image is valid
+  lineinfile:
+    name: "{{ fcos_checksum_filename }}"
+    line: "{{ fcos_old_image.stat.checksum }}  {{ fcos_file }}"
+    state: present
+  check_mode: true
+  register: csum_check
+  failed_when: (csum_check is changed) or (csum_check is failed)
+  ignore_errors: true
+  when: fcos_old_image.stat.exists
+  become: true
+
+- name: Download fresh fcos image if previous doesn't exist
+  become: true
+  block:
+    # Work-a-round for https://github.com/ansible/ansible/issues/71420
+    #   fix not shipped yet
+    - name: Findout exactly sha256
+      set_fact:
+        fcos_csum_str: "{{ lookup('vars', 'fcos_checksum_sha256').split() | first }}"
+      when: fcos_csum_str is not defined
+
+    - name: Download fcos
+      get_url:
+        url: "{{ fcos_download_url }}"
+        dest: "{{ fcos_path }}/{{ fcos_download_url | basename }}"
+        checksum: "sha256:{{ fcos_csum_str }}"
+      register: fcos_download
+
+    - name: Get filetype
+      stat:
+        path: "{{ fcos_path }}/{{ fcos_download_url | basename }}"
+      register: fcos_stat
+
+    - name: unzip the fcos
+      command: "gunzip {{ fcos_path }}/{{ fcos_download_url | basename }}"
+      args:
+        chdir: "{{ fcos_path }}"
+        creates: "{{ fcos_path }}/{{ fcos_file }}"
+      register: unzip
+      when: fcos_stat.stat.mimetype == 'application/x-gzip'
+
+    - name: unxz the coreos
+      command: "unxz {{ fcos_path }}/{{ fcos_download_url | basename }}"
+      args:
+        chdir: "{{ fcos_path }}"
+        creates: "{{ fcos_path }}/{{ fcos_file }}"
+      register: unxz
+      when: fcos_stat.stat.mimetype == 'application/x-xz'
+  when: >
+    (not fcos_old_image.stat.exists) or
+    csum_check.changed or
+    csum_check.failed
