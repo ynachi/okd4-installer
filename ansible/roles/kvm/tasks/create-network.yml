@@ -75,3 +75,4 @@
     block: |
       {{ listen_address }} api.{{ cluster_name }}.{{ public_domain }}
   tags: public_dns
+  become: true
