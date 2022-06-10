@@ -1,0 +1,13 @@
+---
+# tasks file for loadbalancer
+- name: Build haproxy config
+  set_fact:
+    lb_haproxy_cfg: "{{ lookup('template','templates/haproxy.conf.j2') }}"
+
+- name: Debug haproxy config
+  debug:
+    msg: "{{ lb_haproxy_cfg.split('\n') }}"
+    verbosity: 1
+
+- name: Create OKD4 loadbalancer
+  include: create.yml

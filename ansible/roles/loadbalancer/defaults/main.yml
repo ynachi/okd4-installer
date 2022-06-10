@@ -1,0 +1,5 @@
+---
+# defaults file for loadbalancer
+lb_name: "okd-4-loadbalancer"
+lb_container_image: quay.io/redhat-emea-ssa-team/openshift-4-loadbalancer:master
+
