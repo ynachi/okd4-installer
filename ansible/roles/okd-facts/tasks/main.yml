@@ -13,8 +13,7 @@
 
 - name: Set public IPv4 address alias
   set_fact:
-    listen_address: 
-      - "{{ ipv4_listen_public }}"
+    listen_address: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
   when: "'IPv4' in ip_families"
   tags: always
 
