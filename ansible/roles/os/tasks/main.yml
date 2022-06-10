@@ -77,13 +77,6 @@
     enabled: true
   become: true
 
-- name: Enable & Start Podman
-  service:
-    name: podman
-    state: started
-    enabled: true
-  become: true
-
 - name: Allow NFS traffic from VM's to Host
   firewalld:
     zone: libvirt
@@ -162,8 +155,9 @@
     enabled: yes
   become: true
 
-- name: 'Restart libvirtd because of Issue #146'
-  systemd:
-    name: libvirtd
-    state: restarted
-  become: true
+# @TODO: Check if this is needed later
+# - name: 'Restart libvirtd because of Issue #146'
+#   systemd:
+#     name: libvirtd
+#     state: restarted
+#   become: true

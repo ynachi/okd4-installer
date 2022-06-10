@@ -1,10 +1,11 @@
 ---
 # defaults file for os
 kvm_packages:
-  - "@virtualization-hypervisor"
-  - "@virtualization-client"
-  - "@virtualization-platform"
-  - "@virtualization-tools"
+  - "@virt"
+  - "virt-top"
+  - "libguestfs-tools"
+  - "virt-install"
+  - "virt-viewer"
   # ansible virt need lxml
   - python3-lxml
   - python3-pip
