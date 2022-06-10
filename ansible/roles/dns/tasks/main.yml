@@ -13,5 +13,5 @@
 
 - name: Include DNS provider
   include: "letsencrypt.yml"
-  when: letsencrypt_disabled == false
+  when: not letsencrypt_disabled
 
