@@ -2,4 +2,12 @@
 pd_public_ip: "{{ listen_address }}"
 pd_provider: "{{ dns_provider }}"
 pd_cloudflare_zone: "{{ dns_zone }}"
+le_public_domain: "{{ dns_zone }}"
+le_cloudflare_zone: "{{ dns_zone }}"
 pd_public_domain: "{{ cluster_name }}.{{ dns_zone }}"
+le_certificates_dir: "{{ ansible_env.HOME  }}/okd/certificate"
+le_letsencrypt_account_email: "{{ cert_account_email }}"
+# Default staging directory
+# Production directory: https://acme-v02.api.letsencrypt.org/directory
+le_acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
+le_dns_provider:  "{{ dns_provider }}"

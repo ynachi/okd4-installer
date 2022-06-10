@@ -11,4 +11,7 @@
   tags: public_dns
   become: true
 
+- name: Include DNS provider
+  include: "letsencrypt.yml"
+  when: letsencrypt_disabled == false
 

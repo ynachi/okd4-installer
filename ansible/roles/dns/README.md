@@ -1,7 +1,7 @@
-Role Name
+dns
 =========
 
-A brief description of the role goes here.
+Create public dns entries and Letsencrypt certificates 
 
 Requirements
 ------------
