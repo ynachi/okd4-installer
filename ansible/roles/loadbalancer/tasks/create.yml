@@ -13,6 +13,8 @@
     dest: "/etc/sysconfig/{{ lb_name }}.env"
     mode: 0644
   become: true
+  notify:
+    - "Restart LB"
 
 - name: Install OpenShift 4 Loadbalancer SystemD service
   template:

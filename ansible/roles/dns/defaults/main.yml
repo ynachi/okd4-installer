@@ -9,5 +9,6 @@ le_certificates_dir: "{{ ansible_env.HOME  }}/okd/certificate"
 le_letsencrypt_account_email: "{{ cert_account_email }}"
 # Default staging directory
 # Production directory: https://acme-v02.api.letsencrypt.org/directory
-le_acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
+# Staging directory: https://acme-staging-v02.api.letsencrypt.org/directory
+le_acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
 le_dns_provider:  "{{ dns_provider }}"

@@ -1,0 +1,206 @@
+---
+- name: Info message
+  debug:
+    msg:
+      - "If you like to follow the installation run 'tail -f  {{ openshift_install_dir }}/.openshift_install.log' in a second terminal."
+      - "For more details, connect to the bootstrap node: ssh -l core {{ vn_subnet.split('.')[:3] | join('.') }}.2"
+
+- name: Waiting for bootstrap to complete
+  command: "openshift-install wait-for bootstrap-complete --dir {{ openshift_install_dir }} --log-level debug"
+  register: bootstrap_status
+  retries: 60
+  delay: 60
+  until: bootstrap_status.rc == 0
+
+- name: Destroy bootstrap node
+  include: destroy-vm.yml
+  vars:
+    vm_instance_name: "{{ cluster_name }}-bootstrap"
+
+- name: Start background node approver process
+  async: 1800   #   30 minutes
+  poll: 0
+  # yamllint disable rule:line-length
+  shell: |
+    set -o pipefail
+    while true
+    do
+      oc --kubeconfig="{{ openshift_install_dir }}/auth/kubeconfig" get csr --no-headers | \
+        awk '/Pending/ {print $1}' | \
+        xargs --no-run-if-empty oc --kubeconfig="{{ openshift_install_dir }}/auth/kubeconfig" adm certificate approve
+      sleep 1
+    done
+  # yamllint enable rule:line-length
+
+- name: Build k8s variables
+  import_tasks: build-k8s-vars.yml
+  tags:
+    - post-install
+    - add-ons
+    - post-install-add-ons
+    - exports
+    - storage
+    - idp
+    - rolebindings
+
+- name: Provision nfs storage
+  import_tasks: post-install-storage-nfs.yml
+  when: storage_nfs
+  tags: storage
+
+- name: Set image registry managementState from Removed to Managed
+  # yamllint disable rule:line-length
+  # noqa var-spacing
+  command: "oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\":{\"managementState\": \"Managed\"}}' --kubeconfig {{ openshift_install_dir }}/auth/kubeconfig"
+  # yamllint enable rule:line-length
+  register: registry_status
+  retries: 60
+  delay: 30
+  until: registry_status.rc == 0
+  when: storage_nfs
+  tags: storage
+
+- name: Waiting installation to complete
+  command: "openshift-install wait-for install-complete --dir {{ openshift_install_dir }}"
+  register: install_status
+  retries: 60
+  delay: 60
+  until: install_status.rc == 0
+
+# ###########################################################################################
+# # Install letsencrypt certificates
+# ###########################################################################################
+- include: certificate-install.yml
+  when: letsencrypt_disabled == false
+  tags:
+    - post-install
+    - certificates
+
+# ###########################################################################################
+# # Configure authentication
+# ###########################################################################################
+- name: Init identity_providers
+  tags:
+    - post-install
+    - idp
+  set_fact:
+    identity_providers: "[]"
+
+- name: Handle auth_htpasswd
+  block:
+    - name: Create htpasswd secret
+      k8s:
+        state: present
+        kubeconfig: "{{ k8s_kubeconfig }}"
+        host: "{{ k8s_host }}"
+        ca_cert: "{{ k8s_ca_cert }}"
+        client_cert: "{{ k8s_client_cert }}"
+        client_key: "{{ k8s_client_key }}"
+        definition:
+          apiVersion: v1
+          data:
+            htpasswd: "{{ auth_htpasswd | join('\n') | b64encode }}"
+          kind: Secret
+          metadata:
+            name: htpasswd
+            namespace: openshift-config
+          type: Opaque
+    - name: Create htpasswd identity provider template
+      set_fact:
+        htpasswd_idp:
+          htpasswd:
+            fileData:
+              name: htpasswd
+          mappingMethod: claim
+          name: Local
+          type: HTPasswd
+    - name: Push htpasswd_idp to identity_providers
+      set_fact:
+        identity_providers: "{{ identity_providers }} + [ {{ htpasswd_idp }} ]"
+  when: auth_htpasswd is defined
+  tags:
+    - post-install
+    - idp
+
+
+- name: Configure identity providers
+  k8s:
+    state: present
+    kubeconfig: "{{ k8s_kubeconfig }}"
+    host: "{{ k8s_host }}"
+    ca_cert: "{{ k8s_ca_cert }}"
+    client_cert: "{{ k8s_client_cert }}"
+    client_key: "{{ k8s_client_key }}"
+    definition:
+      apiVersion: config.openshift.io/v1
+      kind: OAuth
+      metadata:
+        name: cluster
+      spec:
+        identityProviders: "{{ identity_providers }}"
+  tags:
+    - post-install
+    - idp
+
+# ###########################################################################################
+# # Configure cluster role bindings
+# ###########################################################################################
+
+- name: Setup cluster role bindings
+  k8s:
+    state: present
+    kubeconfig: "{{ k8s_kubeconfig }}"
+    host: "{{ k8s_host }}"
+    ca_cert: "{{ k8s_ca_cert }}"
+    client_cert: "{{ k8s_client_cert }}"
+    client_key: "{{ k8s_client_key }}"
+    definition:
+      kind: ClusterRoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: "{{ item.name }}-{{ item.cluster_role }}"
+      subjects:
+        - apiGroup: rbac.authorization.k8s.io
+          kind: User
+          name: "{{ item.name }}"
+      roleRef:
+        kind: ClusterRole
+        name: "{{ item.cluster_role }}"
+  with_items: "{{ cluster_role_bindings }}"
+  when: cluster_role_bindings is defined
+  tags:
+    - post-install
+    - rolebindings
+
+# ###########################################################################################
+# # Handle post-install-add-ons
+# ###########################################################################################
+
+# - name: Include post-install-add-ons
+#   include: post-install-add-ons.yml
+#   when: add_ons_enabled
+#   tags:
+#     - post-install
+#     - add-ons
+#     - post-install-add-ons
+
+# ###########################################################################################
+# # Print Cluster informations
+# ###########################################################################################
+
+- name: DNS info if dns_provider == 'none'
+  debug:
+    msg:
+      - "Please don't forget to create DNS"
+      - " - api.{{ cluster_name }}.{{ public_domain }} => {{ public_ip | default(listen_address) }}"
+      - " - *.apps.{{ cluster_name }}.{{ public_domain }} => {{ public_ip | default(listen_address) }}"
+  when: dns_provider == 'none'
+  tags:
+    - lastmessage
+
+- name: Cluster informations
+  debug:
+    msg: "{{ install_status.stderr_lines | map('regex_replace', 'level=info msg=\"(.*)\"', '\\1') | list }}"
+  tags:
+    - post-install
+    - lastmessage

@@ -5,20 +5,20 @@
     <dns>
         {% if 'IPv4' in ip_families  %}
         <host ip='{{ vn_subnet.split('.')[:3] | join('.')}}.1'>
-            <hostname>host.{{ vn_internal_domain }}</hostname>
-            <hostname>api-int.{{ vn_public_domain }}</hostname>
-            <hostname>api.{{ vn_public_domain }}</hostname>
-            <hostname>oauth-openshift.apps.{{ vn_public_domain }}</hostname>
-            <hostname>console-openshift-console.apps.{{ vn_public_domain }}</hostname>
+            <hostname>host.{{ vn_internal_domain }}.{{ cluster_name }}</hostname>
+            <hostname>api-int.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
+            <hostname>api.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
+            <hostname>oauth-openshift.apps.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
+            <hostname>console-openshift-console.apps.{{ vn_public_domain }}."{{ cluster_name }}</hostname>
         </host>
         {% endif %}
         {% if 'IPv6' in ip_families  %}
         <host ip='{{ vn_subnet_ipv6 }}::1'>
-            <hostname>host.{{ vn_internal_domain }}</hostname>
-            <hostname>api-int.{{ vn_public_domain }}</hostname>
-            <hostname>api.{{ vn_public_domain }}</hostname>
-            <hostname>oauth-openshift.apps.{{ vn_public_domain }}</hostname>
-            <hostname>console-openshift-console.apps.{{ vn_public_domain }}</hostname>
+            <hostname>host.{{ vn_internal_domain }}.{{ cluster_name }}</hostname>
+            <hostname>api-int.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
+            <hostname>api.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
+            <hostname>oauth-openshift.apps.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
+            <hostname>console-openshift-console.apps.{{ vn_public_domain }}.{{ cluster_name }}</hostname>
         </host>
         {% endif %}
     </dns>

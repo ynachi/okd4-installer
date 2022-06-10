@@ -1,24 +1,7 @@
 ---
-
-openshift_install_dir: "{{ playbook_dir }}/../{{ cluster_name }}"
-ssh_public_key_location: /root/.ssh/id_rsa
-
-# Default: qcow2
-# For more performance use LVM
-vm_storage_backend: qcow2
-# Only necessary for LVM, ignored by qcow but should be '/var/lib/libvirt/images/'
-vm_storage_backend_location:
-vm_autostart: false
-
-# Important: OpenShift version must match to RHEL CoreOS version!
-
-# dev-pre:
-# {{ openshift_mirror }}/pub/openshift-v4/clients/ocp-dev-preview
-
-
-certificates_dir: "{{ playbook_dir }}/../certificate"
-certficate_fullchain: "{{ certificates_dir }}/{{ cluster_name }}.{{ public_domain }}/fullchain.crt"
-certficate_key: "{{ certificates_dir }}/{{ cluster_name }}.{{ public_domain }}/cert.key"
+# certificates_dir: "{{ playbook_dir }}/../certificate"
+# certficate_fullchain: "{{ certificates_dir }}/{{ cluster_name }}.{{ public_domain }}/fullchain.crt"
+# certficate_key: "{{ certificates_dir }}/{{ cluster_name }}.{{ public_domain }}/cert.key"
 # Default production directory
 # Production directory: https://acme-v02.api.letsencrypt.org/directory
 # Staging directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -37,11 +20,3 @@ butane_cli_location: "{{ openshift_mirror }}/pub/openshift-v4/clients/butane/lat
 storage_nfs: false
 storage_nfs_path_prefix: '/var/lib/libvirt/images'
 storage_nfs_target_namespace: openshift-nfs-provisioner
-
-# sdn plugin
-sdn_plugin_name: OVNKubernetes
-
-# Master node schedulable
-masters_schedulable: true
-
-add_ons_enabled: false

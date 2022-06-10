@@ -5,6 +5,13 @@
     - name: Set OpenShift cluster facts
       import_role:
         name: okd-facts
+    - name: Setup public DNS entries
+      import_role:
+        name: dns
+      when: dns_provider != 'none'
+      tags:
+        - public_dns
+        - certificates
 # @TODO
 # Check in which role we need to gather facts
 # and disable fact gathering for more performance
@@ -16,6 +23,15 @@
     - name: Configure KVM
       import_role:
         name: kvm
+    - name: Create OKD 4 load balancer
+      import_role:
+        name: loadbalancer
+      tags: lb
+    - name: Prepare OKD4
+      import_role:
+        name: prepare-okd
+
+
 
 
 

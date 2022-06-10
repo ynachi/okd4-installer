@@ -1,0 +1,36 @@
+---
+- name: Create disk for {{ vm_instance_name }}
+  command: "qemu-img create -f qcow2 -F qcow2 -b {{ fcos_image_location }} /var/lib/libvirt/images/{{ vm_instance_name }}.qcow2 {{ vm_root_disk_size }}"
+  args:
+    creates: "/var/lib/libvirt/images/{{ vm_instance_name }}.qcow2"
+  when: vm_storage_backend == "qcow2"
+  become: true
+
+- name: Copy ignition {{ vm_instance_name }}
+  copy:
+    src: "{{ vm_ignition_file }}"
+    dest: "/var/lib/libvirt/images/{{ vm_instance_name }}.ign"
+    remote_src: true
+    mode: '0644'
+  become: true
+
+- name: Debug - create /tmp/{{ vm_instance_name }}.virt.xml
+  template:
+    src: "vm.xml.j2"
+    dest: "/tmp/{{ vm_instance_name }}.virt.xml"
+    mode: 0664
+  become: true
+
+- name: Define VirtualMachine {{ vm_instance_name }}
+  virt:
+    name: "{{ vm_instance_name }}"
+    command: define
+    xml: "{{ lookup('template', 'templates/vm.xml.j2') }}"
+  become: true
+
+- name: Start VirtualMachine {{ vm_instance_name }}
+  virt:
+    name: "{{ vm_instance_name }}"
+    state: running
+    autostart: "{{ vm_autostart }}"
+  become: true

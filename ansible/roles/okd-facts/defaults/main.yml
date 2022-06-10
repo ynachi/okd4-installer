@@ -5,7 +5,7 @@ vn_subnet: "192.168.50.0"
 vn_name: "vmnet01"
 vn_internal_domain: "compute.local"
 vn_public_domain: "ulozaka.com"
-public_domain: "ulozaka.com"
+public_domain: "{{ vn_public_domain }}"
 
 #
 ip_families:
@@ -13,14 +13,14 @@ ip_families:
 
 # VM flavors
 master_count: 3
-master_vcpu: 4
-master_memory_size: 16384
+master_vcpu: 6
+master_memory_size: 36864
 master_memory_unit: 'MiB'
 # qemu-img image size specified.
 #   You may use k, M, G, T, P or E suffixe
 master_root_disk_size: '120G'
 
-compute_count: 3
+compute_count: 0
 compute_vcpu: 2
 compute_memory_size: 8192
 compute_memory_unit: 'MiB'

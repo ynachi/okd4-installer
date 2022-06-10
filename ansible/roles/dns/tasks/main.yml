@@ -7,7 +7,7 @@
     path: /etc/hosts
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}.{{ pd_public_domain }}"
     block: |
-      "{{ pd_public_ip }} api.{{ cluster_name }}.{{ pd_public_domain }}"
+      {{ pd_public_ip }} api.{{ cluster_name }}.{{ pd_public_domain }}
   tags: public_dns
   become: true
 

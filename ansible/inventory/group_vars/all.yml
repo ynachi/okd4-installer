@@ -1,3 +1,43 @@
 ---
 cluster_name: ocp4
 dns_provider: cloudflare
+dns_zone: ulozaka.com
+letsencrypt_disabled: false
+vm_storage_backend: qcow2
+cloudflare_account_email: !vault |
+                        $ANSIBLE_VAULT;1.1;AES256
+                        32333437393665383038313965323861653165346138323233313063336634333932343739653031
+                        6435393061306639626466666432633135323630373633310a633130333535633131343131346231
+                        66323461663836333336386439643632616161393238303362363066383931626263653162363831
+                        3233383463366134650a333830363537613038626562396563383932386536643137303732313439
+                        65313066626130313766326666663538643661323461643466623165383636346632
+ 
+cloudflare_account_api_token: !vault |
+                            $ANSIBLE_VAULT;1.1;AES256
+                            35633632616136333335313361613166613530366238326136623131343566303463363432633033
+                            3935396137366366383133623065653431636666343933310a366235373964373963646239663131
+                            38393935353637623035343435363534343862396135373230353964633138333333333831363939
+                            6633373633616666330a336364393061313536316366363764313539313264313362613233306632
+                            30383139303437353637303262306365346533303736323637376336633566633931306530626138
+                            3364363837376331306230326362383435366635366464306566
+
+cert_account_email: "{{ cloudflare_account_email }}"
+# Only necessary for LVM, ignored by qcow but should be '/var/lib/libvirt/images/'
+vm_storage_backend_location:
+vm_autostart: false
+storage_nfs: true
+storage_nfs_path_prefix: '/var/okd/nfs'
+storage_nfs_target_namespace: openshift-nfs-provisioner
+storage_nfs_server_name: '192.168.50.1'
+certificates_dir: "{{ ansible_env.HOME  }}/okd/certificate"
+certficate_key: "{{ certificates_dir }}/{{ dns_zone }}/cert.key"
+certficate_fullchain: "{{ certificates_dir }}/{{ dns_zone }}/fullchain.crt"
+
+auth_htpasswd:
+  - "admin:$apr1$4vArRiV9$4wQJmevQKxyuVkAyojGpr/"
+
+cluster_role_bindings:
+  - cluster_role: sudoer
+    name: admin
+  - cluster_role: cluster-admin
+    name: admin

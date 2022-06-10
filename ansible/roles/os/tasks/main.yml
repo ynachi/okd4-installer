@@ -114,6 +114,7 @@
     - 80/tcp
     - 443/tcp
     - 6443/tcp
+    - 22623/tcp
   notify: 'Reload Firewalld'
   become: true
 
