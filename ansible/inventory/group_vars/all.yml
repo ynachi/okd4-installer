@@ -26,7 +26,7 @@ cert_account_email: "{{ cloudflare_account_email }}"
 vm_storage_backend_location:
 vm_autostart: false
 storage_nfs: true
-storage_nfs_path_prefix: '/var/okd/nfs'
+storage_nfs_path_prefix: '/mnt/data/okd4/nfs'
 storage_nfs_target_namespace: openshift-nfs-provisioner
 storage_nfs_server_name: '192.168.50.1'
 certificates_dir: "{{ ansible_env.HOME  }}/okd/certificate"

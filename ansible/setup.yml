@@ -5,6 +5,10 @@
     - name: Set OpenShift cluster facts
       import_role:
         name: okd-facts
+    - name: Prepare infra host
+      import_role:
+        name: os
+      tags: os 
     - name: Setup public DNS entries
       import_role:
         name: dns
@@ -16,10 +20,6 @@
 # Check in which role we need to gather facts
 # and disable fact gathering for more performance
 #      gather_facts: false
-    - name: Prepare infra host
-      import_role:
-        name: os
-      tags: os 
     - name: Configure KVM
       import_role:
         name: kvm
