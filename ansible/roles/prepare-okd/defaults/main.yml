@@ -1,6 +1,6 @@
 ---
 # defaults file for prepare-okd
-fcos_path: /mnt/data/libvirt/images
+fcos_path: "{{ vms_base_path }}/images"
 fcos_file: "{{ fcos_download_url | basename | regex_search('.*qcow2') }}"
 fcos_image_location: "{{ fcos_path }}/{{ fcos_file }}"
 # checksum of the file we intend to download

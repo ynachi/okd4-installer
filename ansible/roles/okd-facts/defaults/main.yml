@@ -14,7 +14,7 @@ ip_families:
 # VM flavors
 master_count: 3
 master_vcpu: 4
-master_memory_size: 38912
+master_memory_size: 37109
 master_memory_unit: 'MiB'
 # qemu-img image size specified.
 #   You may use k, M, G, T, P or E suffixe

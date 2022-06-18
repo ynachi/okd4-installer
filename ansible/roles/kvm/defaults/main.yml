@@ -18,5 +18,5 @@ butane_cli_location: "{{ openshift_mirror }}/pub/openshift-v4/clients/butane/lat
 #  storage_nfs do not support multi cluster support, it overwrites the
 #  /etc/exports
 storage_nfs: false
-storage_nfs_path_prefix: '/var/lib/libvirt/images'
+storage_nfs_path_prefix: "  {{ vms_base_path }}/images"
 storage_nfs_target_namespace: openshift-nfs-provisioner

@@ -41,3 +41,5 @@ cluster_role_bindings:
     name: admin
   - cluster_role: cluster-admin
     name: admin
+
+vms_base_path: /mnt/data/libvirt

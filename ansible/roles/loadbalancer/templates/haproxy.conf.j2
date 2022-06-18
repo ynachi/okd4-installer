@@ -72,7 +72,7 @@ listen api
 {% endfor %}
 
 listen machine-config-server
-{% for listen in ipv4_listen_private + ipv4_listen_public  %}
+{% for listen in ipv4_listen_private %}
     bind {{ listen }}:22623
 {% endfor %}
     mode tcp

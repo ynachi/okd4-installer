@@ -27,7 +27,7 @@
     api_token: "{{ cloudflare_account_api_token }}"
   with_items:
     - api
-    - api-int
+#    - api-int
     - '*.apps'
   tags:
     - public_dns

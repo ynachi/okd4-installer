@@ -57,10 +57,38 @@
             user:
               name: root
             overwrite: true
+          - path: /etc/hosts
+            mode: 420
+            overwrite: true
+            contents:
+              inline: |
+                127.0.0.1 localhost.localdomain localhost
+                ::1     ip6-localhost ip6-loopback
+                {{ vn_subnet.split('.')[:3] | join('.')}}.1 api-int.{{ cluster_name }}.{{ vn_public_domain }}
+                {% for node in nodes.bootstrap %}
+                {{ node.ipv4 }} {{ node.fqdn }}
+                {% endfor %}
+                {% for node in nodes.masters %}
+                {{ node.ipv4 }} {{ node.fqdn }}
+                {% endfor %}
+                {% for node in nodes.workers %}
+                {{ node.ipv4 }} {{ node.fqdn }}
+                {% endfor %}
+
   with_items:
     - bootstrap
     - master
     - worker
+
+# - name: Create FCOS Config
+#   template:
+#     src: ignition_update.rcc.j2
+#     dest: "{{ openshift_install_dir }}/{{ item }}.rcc"
+#     mode: 0644
+#   loop:
+#     - bootstrap
+#     - master
+#     - worker  
 
 - name: Mangle ignition config
   command: |

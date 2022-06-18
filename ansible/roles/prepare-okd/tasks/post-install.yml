@@ -8,9 +8,9 @@
 - name: Waiting for bootstrap to complete
   command: "openshift-install wait-for bootstrap-complete --dir {{ openshift_install_dir }} --log-level debug"
   register: bootstrap_status
-  retries: 60
+  retries: 35
   delay: 60
-  until: bootstrap_status.rc == 0
+  until: bootstrap_status.stderr_lines is search('It is now safe to remove the bootstrap resources')
 
 - name: Destroy bootstrap node
   include: destroy-vm.yml
@@ -57,6 +57,16 @@
   retries: 60
   delay: 30
   until: registry_status.rc == 0
+  when: storage_nfs
+  tags: storage
+
+- name: Set image pruning job
+  command: "oc patch imagepruners.imageregistry.operator.openshift.io/cluster --type merge -p '{\"spec\":{\"schedule\":\"0 0 * * *\",\"suspend\":false,\"keepTagRevisions\":3,\"keepYoungerThan\":60,\"resources\":{},\"affinity\":{},\"nodeSelector\":{},\"tolerations\":[],\"startingDeadlineSeconds\":60,\"successfulJobsHistoryLimit\":3,\"failedJobsHistoryLimit\":3}}' --kubeconfig {{ openshift_install_dir }}/auth/kubeconfig"
+  # yamllint enable rule:line-length
+  register: job_status
+  retries: 5
+  delay: 15
+  until: job_status.rc == 0
   when: storage_nfs
   tags: storage
 
@@ -197,6 +207,9 @@
   when: dns_provider == 'none'
   tags:
     - lastmessage
+
+- name: Delete the temporary user (kubeadm)
+  command: "oc delete secrets kubeadmin -n kube-system --kubeconfig {{ openshift_install_dir }}/auth/kubeconfig"
 
 - name: Cluster informations
   debug:

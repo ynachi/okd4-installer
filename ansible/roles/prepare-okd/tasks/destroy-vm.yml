@@ -15,13 +15,13 @@
 
 - name: Delete disk {{ vm_instance_name }}
   file:
-    path: "/var/lib/libvirt/images/{{ vm_instance_name }}.qcow2"
+    path: "{{ vms_base_path }}/images/{{ vm_instance_name }}.qcow2"
     state: absent
   when: vm_storage_backend == "qcow2"
   become: true
 
 - name: Delete ignition {{ vm_instance_name }}
   file:
-    path: "/var/lib/libvirt/images/{{ vm_instance_name }}.ign"
+    path: "{{ vms_base_path }}/images/{{ vm_instance_name }}.ign"
     state: absent
   become: true

@@ -21,6 +21,7 @@
     <apic/>
     <pae/>
   </features>
+  <cpu mode='host-passthrough' check='none' migratable='on'/>
   <clock offset="utc">
     <timer name="rtc" tickpolicy="catchup"/>
     <timer name="pit" tickpolicy="delay"/>
@@ -41,7 +42,7 @@
 {% else %}
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
-      <source file='/var/lib/libvirt/images/{{ vm_instance_name }}.qcow2'/>
+      <source file='{{ vms_base_path }}/images/{{ vm_instance_name }}.qcow2'/>
       <target dev='vda' bus='virtio'/>
     </disk>
 {% endif %}
@@ -70,6 +71,6 @@
   </devices>
   <qemu:commandline>
       <qemu:arg value='-fw_cfg'/>
-      <qemu:arg value='name=opt/com.coreos/config,file=/var/lib/libvirt/images/{{ vm_instance_name }}.ign'/>
+      <qemu:arg value='name=opt/com.coreos/config,file={{ vms_base_path }}/images/{{ vm_instance_name }}.ign'/>
   </qemu:commandline>
 </domain>
