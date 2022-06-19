@@ -8,7 +8,7 @@
     - name: Prepare infra host
       import_role:
         name: os
-      tags: os 
+      tags: os
     - name: Setup public DNS entries
       import_role:
         name: dns
@@ -16,10 +16,10 @@
       tags:
         - public_dns
         - certificates
-# @TODO
-# Check in which role we need to gather facts
-# and disable fact gathering for more performance
-#      gather_facts: false
+    # @TODO
+    # Check in which role we need to gather facts
+    # and disable fact gathering for more performance
+    #      gather_facts: false
     - name: Configure KVM
       import_role:
         name: kvm
@@ -30,9 +30,3 @@
     - name: Prepare OKD4
       import_role:
         name: prepare-okd
-
-
-
-
-
-
