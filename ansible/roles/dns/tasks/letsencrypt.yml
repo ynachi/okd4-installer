@@ -22,17 +22,17 @@
     type: RSA
     size: 4096
 
-- name: Generate an OpenSSL Certificate Signing Request with subjectAltName extension
+- name: Generate an OpenSSL CSR with subjectAltName extension
   openssl_csr:
     path: "{{ le_certificates_dir }}/{{ le_public_domain }}/cert.csr"
     privatekey_path: "{{ le_certificates_dir }}/{{ le_public_domain }}/cert.key"
     subject_alt_name: "{{ item.value | map('regex_replace', '^', 'DNS:') | list }}"
   with_dict:
     dns_server:
-    - "*.apps.{{ cluster_name }}.{{ le_public_domain }}"
-    - "*.apps.{{ le_public_domain }}"
-    - "api.{{ le_public_domain }}"
-    - "api.{{ cluster_name }}.{{ le_public_domain }}"
+      - "*.apps.{{ cluster_name }}.{{ le_public_domain }}"
+      - "*.apps.{{ le_public_domain }}"
+      - "api.{{ le_public_domain }}"
+      - "api.{{ cluster_name }}.{{ le_public_domain }}"
 
 - name: Create a challenge for {{ le_public_domain }} using a account key file.
   acme_certificate:

@@ -1,11 +1,30 @@
 ---
+
+- name: Verify that required variables are defined
+  assert:
+    that:
+      - "{{ item }} is defined"
+    fail_msg: "{{ item }} needs to be set for the role to work"
+    success_msg: Required variable {{ item }} is defined
+  loop:
+    - pd_public_ip
+    - pd_provider
+    - pd_cloudflare_zone
+    - le_public_domain
+    - le_cloudflare_zone
+    - pd_public_domain
+    - le_certificates_dir
+    - le_letsencrypt_account_email
+    - le_acme_directory
+    - le_dns_provider
+
 - name: Include DNS provider
   include: "create-{{ pd_provider }}.yml"
 
 - name: Add api.{{ cluster_name }}.{{ pd_public_domain }} to /etc/hosts
   blockinfile:
     path: /etc/hosts
-    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ cluster_name }}.{{ pd_public_domain }}"
+    marker: "# {mark} ANSIBLE MANAGED {{ cluster_name }}.{{ pd_public_domain }}"
     block: |
       {{ pd_public_ip }} api.{{ cluster_name }}.{{ pd_public_domain }}
   tags: public_dns
@@ -14,4 +33,3 @@
 - name: Include DNS provider
   include: "letsencrypt.yml"
   when: not letsencrypt_disabled
-

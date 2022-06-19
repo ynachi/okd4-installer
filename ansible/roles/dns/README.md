@@ -1,38 +1,39 @@
-dns
-=========
+# dns - Ansible role
 
-Create public dns entries and Letsencrypt certificates 
+DNS role creates dns for a public domain on cloudflare.
+It also setup SSL certificates using Letsencrypt.
 
-Requirements
-------------
+## How to use
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+To use it, it has be listed in roles from the playbook
 
-Role Variables
---------------
+```yaml
+---
+- name: Setup dns record and ssl certificates
+  hosts: deployment
+  gather_facts: false
+  tasks:
+    - name: Import dns role
+      import_role:
+        name: dns
+      tags:
+       - dns
+       - ssl
+       - letsencrypt
+```
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+## Mandatory variables
 
-Dependencies
-------------
+# @TODO: check for redundancy
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+* pd_public_ip:  public IP for the public domain
+* pd_provider: public domain provider, only cloudflare supported for now
+* pd_cloudflare_zone: public dns zone
+* le_public_domain: ubisoft cloud region authentication url
+* le_cloudflare_zone: public dns zone
+* pd_public_domain: public dns domain name
+* le_certificates_dir:  where the certificate files will be stored
+* le_letsencrypt_account_email: user letsencrypt email address
+* le_acme_directory: acme directory (typically prod or staging)
+* le_dns_provider: ??? To review
 
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
