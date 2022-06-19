@@ -8,6 +8,25 @@ Deploy an okd4 cluster on hetzner dedicated. While this has been tested on hetzn
 - Automatic letsencrypt certificates request and configuration for your public endpoints (can also serve for your workloads)
 - A cluster isolated in a private network. Only the required APIs are exposed to the public Internet (Kube API, Workload services and consoles)
 
+## Prerequisite
+
+- A baremetal server with enough RAM/CPU/Disk to handle your Lab (mine was 12x3.6 GHZ Core, 128GB RAM and 1 TB SSD)
+- Centos 8 stream as base OS
+- A public IP if you want your Lab to be available other the Internet (Otherwise, you can use your home LAN)
+- Passwordless SSH to the server for the user Ansible will run with
+- Ansible < 2.12 on the machine from with you will run the deployment (client machine or Ansible controller)
+- jmespath package must be installed
+
+Exemple of client machine setup (in a venv, ideally)
+```bash
+pip3 install --upgrade pip; \
+pip3 install pywinrm[kerberos]; \
+pip3 install pywinrm; \
+pip3 install jmespath; \
+pip3 install requests; \
+python3 -m pip install "ansible<2.12"
+```
+
 ## Architecture
 
 ```flow
