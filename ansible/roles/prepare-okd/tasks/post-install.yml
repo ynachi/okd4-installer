@@ -32,6 +32,13 @@
     done
   # yamllint enable rule:line-length
 
+- name: Waiting installation to complete
+  command: "openshift-install wait-for install-complete --dir {{ openshift_install_dir }}"
+  register: install_status
+  retries: 45
+  delay: 60
+  until: install_status.stderr_lines is search('Install complete')
+
 - name: Build k8s variables
   import_tasks: build-k8s-vars.yml
   tags:
@@ -69,13 +76,6 @@
   until: job_status.rc == 0
   when: storage_nfs
   tags: storage
-
-- name: Waiting installation to complete
-  command: "openshift-install wait-for install-complete --dir {{ openshift_install_dir }}"
-  register: install_status
-  retries: 60
-  delay: 60
-  until: install_status.rc == 0
 
 # ###########################################################################################
 # # Install letsencrypt certificates

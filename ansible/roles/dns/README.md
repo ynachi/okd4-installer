@@ -29,7 +29,7 @@ To use it, it has be listed in roles from the playbook
 * pd_public_ip:  public IP for the public domain
 * pd_provider: public domain provider, only cloudflare supported for now
 * pd_cloudflare_zone: public dns zone
-* le_public_domain: ubisoft cloud region authentication url
+* le_public_domain: ?
 * le_cloudflare_zone: public dns zone
 * pd_public_domain: public dns domain name
 * le_certificates_dir:  where the certificate files will be stored
