@@ -22,11 +22,9 @@ cloudflare_account_api_token: !vault |
                             3364363837376331306230326362383435366635366464306566
 
 cert_account_email: "{{ cloudflare_account_email }}"
-# Only necessary for LVM, ignored by qcow but should be '/var/lib/libvirt/images/'
-vm_storage_backend_location:
-vm_autostart: false
+vm_autostart: true
 storage_nfs: true
-storage_nfs_path_prefix: '/mnt/data/okd4/nfs'
+storage_nfs_path_prefix: '/var/okd4/nfs'
 storage_nfs_target_namespace: openshift-nfs-provisioner
 storage_nfs_server_name: '192.168.50.1'
 certificates_dir: "{{ ansible_env.HOME  }}/okd/certificate"
@@ -42,4 +40,21 @@ cluster_role_bindings:
   - cluster_role: cluster-admin
     name: admin
 
-vms_base_path: /mnt/data/libvirt
+vms_base_path: /var/lib/libvirt
+
+# cluster info
+master_count: 1
+master_vcpu: 4
+master_memory_size: 16384
+master_memory_unit: 'MiB'
+# qemu-img image size specified.
+#   You may use k, M, G, T, P or E suffixe
+master_root_disk_size: '100G'
+
+compute_count: 3
+compute_vcpu: 4
+compute_memory_size: 32000
+compute_memory_unit: 'MiB'
+worker_root_disk_size: '100G'
+
+masters_schedulable: false

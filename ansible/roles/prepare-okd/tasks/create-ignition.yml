@@ -19,7 +19,7 @@
     mode: 0644
 
 - name: Create manifest files
-  command: "{{ openshift_install_command }} create manifests --dir={{ openshift_install_dir }}"
+  command: "openshift-install create manifests --dir={{ openshift_install_dir }}"
   when: not masters_schedulable
 
 - name: Make Master nodes unschedulable

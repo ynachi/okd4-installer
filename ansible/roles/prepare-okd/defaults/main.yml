@@ -14,4 +14,3 @@ sdn_plugin_name: OVNKubernetes
 masters_schedulable: true
 add_ons_enabled: false
 certficate_fullchain: "{{ certificates_dir }}/{{ cluster_name }}.{{ public_domain }}/fullchain.crt"
-
