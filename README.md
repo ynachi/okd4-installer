@@ -7,6 +7,7 @@ Deploy an okd4 cluster on hetzner dedicated. While this has been tested on hetzn
 - Automatic DNS registration if you use Cloudflare as your registrar
 - Automatic letsencrypt certificates request and configuration for your public endpoints (can also serve for your workloads)
 - A cluster isolated in a private network. Only the required APIs are exposed to the public Internet (Kube API, Workload services and consoles)
+- Support single master annd masters only cluster
 
 ## Prerequisite
 
@@ -63,3 +64,10 @@ python3 -m pip install "ansible<2.12"
                                       │                                                               │
                                       └───────────────────────────────────────────────────────────────┘
 ```
+
+## Usage
+
+1. Fill the inventory with the IP/hostname of your baremetal server
+2. Configure passwordless ssh to that server
+3. Fill the global variable file [all.yml](ansible/inventory/group_vars/all.yml). The parmameters are self explainatory.
+4. Run the setup playbook (`ansible playbook -u USERNAME -i inventory setup.yml`). If you use vault as I do, supply the vault password or file accordingly.
