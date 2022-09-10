@@ -11,7 +11,7 @@ The following features are provided:
 - Automatic DNS registration if you use Cloudflare as your registrar (If you don't have cloudflare dns, you can manually add A records pointing the public IP of your server to *apps.<YOUR_CLUSTER_NAME>.<YOUR_DOMAIN> and api.<YOUR_CLUSTER_NAME>.<YOUR_DOMAIN>.)
 - Automatic letsencrypt certificates request and configuration for your public endpoints (can also serve for your workloads)
 - A cluster isolated in a private network. Only the required APIs are exposed to the public Internet (Kube API, Workload services and consoles)
-- Support single master annd masters only cluster
+- Support both single and multi-master cluster
 
 ## Prerequisite
 
