@@ -1,4 +1,4 @@
-# okd4-hetzner
+# okd4-Installer
 
 Deploying an okd4 cluster (upstream for OpenShift) is not an easy task and tend to fail from one deployment to another.
 The purspose of this repo is to provide a tool to quickly spin up a working cluster in a Linux bare metal hypervisor without friction. While this has been tested on hetzner, it can work on any dedicated host. Again, deploying a working okd4 cluster in non-cloud environment is hard. It requiet several steps that are sometimes easy to misconfigure. They are been completely automated using Ansible. The deployment time using this tool was about 30 min (tested several times).
